@@ -1,2 +1,2 @@
 # OAI-gym-PyTorch
-Agents for OpenAI gym Atari games with PyTorch
+Agents for gymnasium games.
