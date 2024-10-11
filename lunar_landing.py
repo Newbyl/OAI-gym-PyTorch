@@ -8,26 +8,30 @@ import random
 
 # Hyperparameters
 GAMMA = 0.99
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 BUFFER_SIZE = 50000
 MIN_REPLAY_SIZE = 1000
 EPSILON_START = 1.0
 EPSILONE_END = 0.02
-EPSILON_DECAY = 10000
+EPSILON_DECAY = 20000 
 TARGET_UPDATE_FREQ = 1000
-LEARNING_RATE = 5e-4
-TARGET_REWARD = 195  # Target average reward to reach
+LEARNING_RATE = 1e-5 
+MAX_TRAINING_STEPS = 200000
 
 class Network(nn.Module):
     def __init__(self, env):
         super().__init__()
         in_features = int(np.prod(env.observation_space.shape))
         self.net = nn.Sequential(
-            nn.Linear(in_features, 64),  # Increased hidden units
+            nn.Linear(in_features, 256),  # Increased hidden units
             nn.ReLU(),
-            nn.Linear(64, 64),
+            nn.Linear(256, 256),
             nn.ReLU(),
-            nn.Linear(64, env.action_space.n)
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, env.action_space.n)
         )
 
     def forward(self, x):
@@ -41,7 +45,7 @@ class Network(nn.Module):
         return action
 
 # Initialize environment and networks
-env = gym.make('CartPole-v1')
+env = gym.make("LunarLander-v3")
 replay_buffer = deque(maxlen=BUFFER_SIZE)
 rew_buffer = deque([0, 0], maxlen=100)
 episode_reward = 0.0
@@ -58,9 +62,6 @@ obs, _ = env.reset()
 for _ in range(MIN_REPLAY_SIZE):
     action = env.action_space.sample()
     new_obs, rew, done, _, _ = env.step(action)
-    
-    # Clip the reward here
-    rew = np.clip(rew, -1.0, 1.0)
     
     transition = (obs, action, rew, done, new_obs)
     replay_buffer.append(transition)
@@ -82,9 +83,6 @@ for step in itertools.count():
         action = online_net.act(obs)
 
     new_obs, rew, done, _, _ = env.step(action)
-    
-    # Clip the reward here
-    rew = np.clip(rew, -1.0, 1.0)
     
     transition = (obs, action, rew, done, new_obs)
     replay_buffer.append(transition)
@@ -131,19 +129,16 @@ for step in itertools.count():
         target_net.load_state_dict(online_net.state_dict())
 
     # Logging
-    if step % 1000 == 0:  # Log more frequently
+    if step % 1000 == 0:
         avg_reward = np.mean(rew_buffer)
         print(f'Step: {step}, Avg Reward: {avg_reward}')
         
-        # Check if the average reward exceeds the target
-        if avg_reward >= TARGET_REWARD:
-            print(f'Solved at step {step} with average reward {avg_reward}!')
-            break
+    if step >= MAX_TRAINING_STEPS:
+        break
 
-# Rendering the environment after reaching the target reward
 print("Rendering the environment...")
-for _ in range(5):  # Render for 5 episodes
-    env = gym.make('CartPole-v1', render_mode='human')
+for _ in range(5):
+    env = gym.make("LunarLander-v3", render_mode='human')
     
     obs, _ = env.reset()
     episode_reward = 0.0
@@ -155,4 +150,4 @@ for _ in range(5):  # Render for 5 episodes
         env.render()
     print(f'Episode Reward: {episode_reward}')
 
-env.close()  # Close the environment after rendering
+env.close()
