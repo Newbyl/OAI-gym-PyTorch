@@ -23,7 +23,7 @@ class Network(nn.Module):
         super().__init__()
         in_features = int(np.prod(env.observation_space.shape))
         self.net = nn.Sequential(
-            nn.Linear(in_features, 64),  # Increased hidden units
+            nn.Linear(in_features, 64),
             nn.ReLU(),
             nn.Linear(64, 64),
             nn.ReLU(),
@@ -131,7 +131,7 @@ for step in itertools.count():
         target_net.load_state_dict(online_net.state_dict())
 
     # Logging
-    if step % 1000 == 0:  # Log more frequently
+    if step % 1000 == 0:
         avg_reward = np.mean(rew_buffer)
         print(f'Step: {step}, Avg Reward: {avg_reward}')
         
@@ -140,9 +140,8 @@ for step in itertools.count():
             print(f'Solved at step {step} with average reward {avg_reward}!')
             break
 
-# Rendering the environment after reaching the target reward
 print("Rendering the environment...")
-for _ in range(5):  # Render for 5 episodes
+for _ in range(5):
     env = gym.make('CartPole-v1', render_mode='human')
     
     obs, _ = env.reset()
@@ -155,4 +154,4 @@ for _ in range(5):  # Render for 5 episodes
         env.render()
     print(f'Episode Reward: {episode_reward}')
 
-env.close()  # Close the environment after rendering
+env.close()
